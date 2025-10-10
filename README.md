@@ -4,14 +4,11 @@ dialer for react native
 
 ## Installation
 
-
 ```sh
 npm install react-native-dialpad
 ```
 
-
 ## Usage
-
 
 ```js
 import { multiply } from 'react-native-dialpad';
@@ -20,7 +17,6 @@ import { multiply } from 'react-native-dialpad';
 
 const result = multiply(3, 7);
 ```
-
 
 ## Contributing
 

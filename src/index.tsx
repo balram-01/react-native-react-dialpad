@@ -88,8 +88,18 @@ export async function getVibrationStatus(): Promise<boolean> {
   return await Dialpad.getVibrationStatus();
 }
 
-export async function forwardAllCalls(cfi: boolean, phoneNumber: string, countryCode: string | null, subscriptionId: number): Promise<string> {
-  return await Dialpad.forwardAllCalls(cfi, phoneNumber, countryCode, subscriptionId);
+export async function forwardAllCalls(
+  cfi: boolean,
+  phoneNumber: string,
+  countryCode: string | null,
+  subscriptionId: number
+): Promise<string> {
+  return await Dialpad.forwardAllCalls(
+    cfi,
+    phoneNumber,
+    countryCode,
+    subscriptionId
+  );
 }
 
 export async function saveReplies(reply: string): Promise<string> {
@@ -108,33 +118,42 @@ export async function getReplies(): Promise<Array<string>> {
   return await Dialpad.getReplies();
 }
 
-export async function getAllContacts(): Promise<Array<{
-  rawId: number;
-  contactId: number;
-  name: string;
-  photoUri: string;
-  phoneNumbers: Array<{
-    value: string;
-    type: number;
-    label: string;
-    normalizedNumber: string;
-    isPrimary: boolean;
-  }>;
-  birthdays: Array<string>;
-  anniversaries: Array<string>;
-}>> {
+export async function getAllContacts(): Promise<
+  Array<{
+    rawId: number;
+    contactId: number;
+    name: string;
+    photoUri: string;
+    phoneNumbers: Array<{
+      value: string;
+      type: number;
+      label: string;
+      normalizedNumber: string;
+      isPrimary: boolean;
+    }>;
+    birthdays: Array<string>;
+    anniversaries: Array<string>;
+  }>
+> {
   return await Dialpad.getAllContacts();
 }
 
-export async function getContactById(rawContactId: number): Promise<ContactMap> {
+export async function getContactById(
+  rawContactId: number
+): Promise<ContactMap> {
   return await Dialpad.getContactById(rawContactId);
 }
 
-export async function createNewContact(contactMap: ContactMap): Promise<string> {
+export async function createNewContact(
+  contactMap: ContactMap
+): Promise<string> {
   return await Dialpad.createNewContact(contactMap);
 }
 
-export async function updateContact(contactMap: ContactMap, photoStatus: number): Promise<string> {
+export async function updateContact(
+  contactMap: ContactMap,
+  photoStatus: number
+): Promise<string> {
   return await Dialpad.updateContact(contactMap, photoStatus);
 }
 
