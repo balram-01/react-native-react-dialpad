@@ -16,9 +16,12 @@ buildscript {
 }
 
 
+// ✅ Add this new plugin for Compose compiler
+plugins {
+  id("org.jetbrains.kotlin.plugin.compose") version "2.2.20"
+}
 apply plugin: "com.android.library"
 apply plugin: "kotlin-android"
-
 apply plugin: "com.facebook.react"
 
 def getExtOrIntegerDefault(name) {
@@ -27,18 +30,30 @@ def getExtOrIntegerDefault(name) {
 
 android {
   namespace "com.dialpad"
-
+sourceSets {
+      main {
+        manifest.srcFile "src/main/AndroidManifestNew.xml"
+      }
+    }
   compileSdkVersion getExtOrIntegerDefault("compileSdkVersion")
 
   defaultConfig {
     minSdkVersion getExtOrIntegerDefault("minSdkVersion")
     targetSdkVersion getExtOrIntegerDefault("targetSdkVersion")
+   vectorDrawables.useSupportLibrary = true
   }
 
+
+// ✅ Enable Compose
   buildFeatures {
     buildConfig true
+    compose true
   }
 
+  // ✅ Compose compiler extension version
+  composeOptions {
+    kotlinCompilerExtensionVersion = "1.5.15"
+  }
   buildTypes {
     release {
       minifyEnabled false
@@ -48,7 +63,6 @@ android {
   lintOptions {
     disable "GradleCompatible"
   }
-
   compileOptions {
     sourceCompatibility JavaVersion.VERSION_1_8
     targetCompatibility JavaVersion.VERSION_1_8
@@ -74,4 +88,40 @@ def kotlin_version = getExtOrDefault("kotlinVersion")
 dependencies {
   implementation "com.facebook.react:react-android"
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+
+  // Jetpack Compose
+//  implementation(platform("androidx.compose:compose-bom:2025.09.01"))
+  implementation("androidx.compose.material3:material3:1.4.0")
+  implementation("androidx.compose.ui:ui-tooling-preview")
+  implementation("androidx.activity:activity-compose:1.11.0")
+  debugImplementation("androidx.compose.ui:ui-tooling")
+
+  // ViewModel
+  implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.4")
+
+  // Android UI libraries
+
+  implementation("androidx.compose.material:material-icons-extended:1.7.8")
+  implementation 'androidx.appcompat:appcompat:1.7.1'
+  implementation 'com.google.android.material:material:1.13.0'
+  implementation 'androidx.activity:activity-ktx:1.11.0'
+  implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
+
+  // Phone number utils
+  implementation 'com.googlecode.libphonenumber:libphonenumber:9.0.15'
+
+  // Serialization
+  implementation("com.google.code.gson:gson:2.13.2")
+  implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
+
+  // Image loading (Coil)
+  implementation("io.coil-kt:coil-compose:2.7.0")
+
+  // DataStore
+  implementation("androidx.datastore:datastore-preferences:1.1.7")
+}
+// ✅ Optional: Add Compose compiler configuration
+composeCompiler {
+  enableStrongSkippingMode = true
+  reportsDestination = layout.buildDirectory.dir("compose_compiler")
 }

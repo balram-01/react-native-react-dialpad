@@ -4,11 +4,15 @@ import android.Manifest
 import android.app.Activity
 import android.app.role.RoleManager
 import android.content.Context
+import android.content.Context.ROLE_SERVICE
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.telecom.PhoneAccountHandle
 import android.telecom.TelecomManager
+import android.telecom.TelecomManager.ACTION_CHANGE_DEFAULT_DIALER
+import android.telecom.TelecomManager.EXTRA_CHANGE_DEFAULT_DIALER_PACKAGE_NAME
 import android.util.Log
 import android.util.SparseArray
 import android.widget.Toast
@@ -22,26 +26,25 @@ import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
-import com.facebook.react.bridge.ReadableArray
-import com.facebook.react.bridge.ReadableMap
 import com.dialpad.extensions.getMyContactsCursor
 import com.dialpad.helpers.MyContactsContentProvider
 import com.dialpad.helpers.SimpleContactsHelper
+import com.facebook.react.bridge.ReadableArray
+import com.facebook.react.bridge.ReadableMap
 import com.dialpad.helpers.ContactHelper
 import com.dialpad.helpers.ensureBackgroundThread
 import com.dialpad.helpers.setCallForwarding
-import com.facebook.react.module.annotations.ReactModule
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-@ReactModule(name = DialpadModule.NAME)
-class DialpadModule(reactContext: ReactApplicationContext) :
-  NativeDialpadSpec(reactContext), ActivityEventListener {
 
-  private val dialerResultCallbacks = SparseArray<Promise>()
+class DialPadHelper(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext),
+  ActivityEventListener {
+
+  private val dialerResultCallbacks =SparseArray<Promise>()
   private var dialerRequestCode = 9876
 
   override fun getName(): String {
@@ -76,7 +79,7 @@ class DialpadModule(reactContext: ReactApplicationContext) :
 
   @RequiresApi(Build.VERSION_CODES.Q)
   @ReactMethod
-  override  fun requestRole(promise: Promise) {
+  fun requestRole(promise: Promise) {
     val roleManager = reactApplicationContext.getSystemService(RoleManager::class.java)
     val telecomManager = reactApplicationContext.getSystemService(TelecomManager::class.java)
     val packageName = reactApplicationContext.packageName
@@ -91,7 +94,7 @@ class DialpadModule(reactContext: ReactApplicationContext) :
       return
     }
 
-    val activity = reactApplicationContext.currentActivity
+    val activity = getCurrentActivity()
     if (activity == null) {
       promise.reject("ActivityError", "No current activity")
       return
@@ -103,15 +106,17 @@ class DialpadModule(reactContext: ReactApplicationContext) :
     activity.startActivityForResult(intent, dialerRequestCode)
     dialerRequestCode++
   }
+
   @RequiresPermission(anyOf = [Manifest.permission.CALL_PHONE, Manifest.permission.MANAGE_OWN_CALLS])
   @ReactMethod
-  override fun makeCall(phoneNumber: String, promise: Promise) {
+  fun makeCall(phoneNumber: String, promise: Promise){
     try {
       if (phoneNumber.isEmpty()) {
         promise.reject("INVALID_NUMBER", "Phone number is missing or invalid")
       }
       val telecomManager = reactApplicationContext.getSystemService(Context.TELECOM_SERVICE) as TelecomManager
       val uri = Uri.fromParts("tel", phoneNumber, null)
+      val callIntent = Intent(Intent.ACTION_CALL, uri)
       if (reactApplicationContext.checkSelfPermission(Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED) {
         telecomManager.placeCall(uri, null)
         promise.resolve("Call placed successfully")
@@ -124,26 +129,28 @@ class DialpadModule(reactContext: ReactApplicationContext) :
   }
 
   @ReactMethod
-  override fun toggleSecureNumber(value: Boolean, promise: Promise) {
-    try {
+  fun toggleSecureNumber(value:Boolean, promise: Promise){
+    try{
       val dataStore = CallSettingDataStore(context = reactApplicationContext)
       CoroutineScope(Dispatchers.IO).launch {
         try {
-          dataStore.updateCallSettings(hideCall = value, updateCall = false)
+          dataStore.updateCallSettings(hideCall = value, updateCall = false) // Assuming updateCall is false by default
           promise.resolve("Secure Number Updated")
         } catch (e: Exception) {
           promise.reject("Secure Failed", "Failed to secure the number: ${e.message}")
         }
       }
-    } catch (e: Exception) {
+    }
+    catch (e:Exception){
       promise.reject("Secure Failed", "Failed to secure the number: ${e.message}")
     }
   }
 
   @ReactMethod
-  override fun getSecureNumber(promise: Promise) {
+  fun getSecureNumber(promise: Promise) {
     try {
       val dataStore = CallSettingDataStore(context = reactApplicationContext)
+
       CoroutineScope(Dispatchers.IO).launch {
         try {
           val hideCallValue = dataStore.secureNumberStatus.first()
@@ -158,7 +165,7 @@ class DialpadModule(reactContext: ReactApplicationContext) :
   }
 
   @ReactMethod
-  override fun toggleVibration(value: Boolean, promise: Promise) {
+  fun toggleVibration(value: Boolean, promise: Promise) {
     try {
       val dataStore = CallSettingDataStore(context = reactApplicationContext)
       CoroutineScope(Dispatchers.IO).launch {
@@ -175,7 +182,7 @@ class DialpadModule(reactContext: ReactApplicationContext) :
   }
 
   @ReactMethod
-  override fun getVibrationStatus(promise: Promise) {
+  fun getVibrationStatus(promise: Promise) {
     try {
       val dataStore = CallSettingDataStore(context = reactApplicationContext)
       CoroutineScope(Dispatchers.IO).launch {
@@ -193,18 +200,16 @@ class DialpadModule(reactContext: ReactApplicationContext) :
 
   @RequiresApi(Build.VERSION_CODES.O)
   @ReactMethod
-  override fun forwardAllCalls(cfi: Boolean, phoneNumber: String, countryCode: String?, subscriptionId: Double, promise: Promise) {
+  fun forwardAllCalls(cfi: Boolean, phoneNumber: String, countryCode: String?,subscriptionId: Int ,promise: Promise){
     try {
-      // Convert subscriptionId to Int, as it's expected to be an integer ID
-      val subscriptionIdInt = subscriptionId.toInt()
-      setCallForwarding(reactApplicationContext, cfi, phoneNumber, countryCode, subscriptionIdInt, promise)
+      setCallForwarding(reactApplicationContext, cfi, phoneNumber,countryCode, subscriptionId,promise)
     } catch (e: Exception) {
       promise.reject("ERROR", "Failed to forward calls: ${e.localizedMessage}")
     }
   }
 
   @ReactMethod
-  override fun saveReplies(reply: String, promise: Promise) {
+  fun saveReplies(reply: String, promise: Promise) {
     val dataStore = CallSettingDataStore(context = reactApplicationContext)
     CoroutineScope(Dispatchers.IO).launch {
       try {
@@ -215,12 +220,12 @@ class DialpadModule(reactContext: ReactApplicationContext) :
       }
     }
   }
-
   @ReactMethod
-  override fun updateReplies(replies: ReadableArray, promise: Promise) {
+  fun updateReplies(replies: ReadableArray, promise: Promise) {
     val dataStore = CallSettingDataStore(context = reactApplicationContext)
     CoroutineScope(Dispatchers.IO).launch {
       try {
+        // Convert ReadableArray to List<String>
         val repliesList = mutableListOf<String>()
         for (i in 0 until replies.size()) {
           repliesList.add(replies.getString(i).toString())
@@ -232,9 +237,8 @@ class DialpadModule(reactContext: ReactApplicationContext) :
       }
     }
   }
-
   @ReactMethod
-  override fun deleteReply(reply: String, promise: Promise) {
+  fun deleteReply(reply: String, promise: Promise) {
     val dataStore = CallSettingDataStore(context = reactApplicationContext)
     CoroutineScope(Dispatchers.IO).launch {
       try {
@@ -247,7 +251,7 @@ class DialpadModule(reactContext: ReactApplicationContext) :
   }
 
   @ReactMethod
-  override fun getReplies(promise: Promise) {
+  fun getReplies(promise: Promise) {
     val dataStore = CallSettingDataStore(context = reactApplicationContext)
     CoroutineScope(Dispatchers.IO).launch {
       try {
@@ -263,11 +267,11 @@ class DialpadModule(reactContext: ReactApplicationContext) :
   }
 
   @ReactMethod
-  override fun getAllContacts(promise: Promise) {
+  fun getAllContacts(promise: Promise) {
     try {
       val contacts = SimpleContactsHelper(reactApplicationContext)
       val result = Arguments.createArray()
-      contacts.getAvailableContacts(false) { items ->
+      contacts.getAvailableContacts(false){ items->
         items.forEach { contact ->
           val contactMap = Arguments.createMap().apply {
             putInt("rawId", contact.rawId)
@@ -275,6 +279,7 @@ class DialpadModule(reactContext: ReactApplicationContext) :
             putString("name", contact.name)
             putString("photoUri", contact.photoUri)
 
+            // phone numbers
             val phoneArray = Arguments.createArray()
             contact.phoneNumbers.forEach { number ->
               val numberMap = Arguments.createMap()
@@ -287,10 +292,12 @@ class DialpadModule(reactContext: ReactApplicationContext) :
             }
             putArray("phoneNumbers", phoneArray)
 
+            // birthdays
             val birthdaysArray = Arguments.createArray()
             contact.birthdays.forEach { birthdaysArray.pushString(it) }
             putArray("birthdays", birthdaysArray)
 
+            // anniversaries
             val anniversariesArray = Arguments.createArray()
             contact.anniversaries.forEach { anniversariesArray.pushString(it) }
             putArray("anniversaries", anniversariesArray)
@@ -303,15 +310,12 @@ class DialpadModule(reactContext: ReactApplicationContext) :
       promise.reject("GET_CONTACTS_ERROR", "Failed to fetch contacts: ${e.localizedMessage}", e)
     }
   }
-
   @ReactMethod
-  override fun getContactById(rawContactId: Double, promise: Promise) {
+  fun getContactById(rawContactId: Int, promise: Promise) {
     ensureBackgroundThread {
       try {
-        // Convert rawContactId to Long, as ContactHelper expects a Long
-        val rawContactIdLong = rawContactId.toLong()
         val contactHelper = ContactHelper(reactApplicationContext)
-        val contact = contactHelper.getContactById(rawContactIdLong)
+        val contact = contactHelper.getContactById(rawContactId.toLong())
 
         if (contact != null) {
           val contactMap = Arguments.createMap().apply {
@@ -332,6 +336,7 @@ class DialpadModule(reactContext: ReactApplicationContext) :
             putString("mimetype", contact.mimetype)
             putString("ringtone", contact.ringtone)
 
+            // Phone numbers
             val phoneArray = Arguments.createArray()
             contact.phoneNumbers.forEach { number ->
               val numberMap = Arguments.createMap()
@@ -344,6 +349,7 @@ class DialpadModule(reactContext: ReactApplicationContext) :
             }
             putArray("phoneNumbers", phoneArray)
 
+            // Emails
             val emailArray = Arguments.createArray()
             contact.emails.forEach { email ->
               val emailMap = Arguments.createMap()
@@ -354,6 +360,7 @@ class DialpadModule(reactContext: ReactApplicationContext) :
             }
             putArray("emails", emailArray)
 
+            // Addresses
             val addressArray = Arguments.createArray()
             contact.addresses.forEach { address ->
               val addressMap = Arguments.createMap()
@@ -364,6 +371,7 @@ class DialpadModule(reactContext: ReactApplicationContext) :
             }
             putArray("addresses", addressArray)
 
+            // Events
             val eventArray = Arguments.createArray()
             contact.events.forEach { event ->
               val eventMap = Arguments.createMap()
@@ -373,14 +381,17 @@ class DialpadModule(reactContext: ReactApplicationContext) :
             }
             putArray("events", eventArray)
 
+            // Birthdays
             val birthdaysArray = Arguments.createArray()
             contact.birthdays.forEach { birthdaysArray.pushString(it) }
             putArray("birthdays", birthdaysArray)
 
+            // Anniversaries
             val anniversariesArray = Arguments.createArray()
             contact.anniversaries.forEach { anniversariesArray.pushString(it) }
             putArray("anniversaries", anniversariesArray)
 
+            // Groups
             val groupArray = Arguments.createArray()
             contact.groups.forEach { group ->
               val groupMap = Arguments.createMap()
@@ -390,15 +401,18 @@ class DialpadModule(reactContext: ReactApplicationContext) :
             }
             putArray("groups", groupArray)
 
+            // Organization
             val orgMap = Arguments.createMap()
             orgMap.putString("company", contact.organization.company)
             orgMap.putString("title", contact.organization.jobPosition)
             putMap("organization", orgMap)
 
+            // Websites
             val websiteArray = Arguments.createArray()
             contact.websites.forEach { websiteArray.pushString(it) }
             putArray("websites", websiteArray)
 
+            // IMs
             val imArray = Arguments.createArray()
             contact.IMs.forEach { im ->
               val imMap = Arguments.createMap()
@@ -411,16 +425,15 @@ class DialpadModule(reactContext: ReactApplicationContext) :
           }
           promise.resolve(contactMap)
         } else {
-          promise.reject("CONTACT_NOT_FOUND", "Contact with ID $rawContactIdLong not found")
+          promise.reject("CONTACT_NOT_FOUND", "Contact with ID $rawContactId not found")
         }
       } catch (e: Exception) {
         promise.reject("GET_CONTACT_ERROR", "Failed to fetch contact: ${e.localizedMessage}", e)
       }
     }
   }
-
   @ReactMethod
-  override fun createNewContact(contactMap: ReadableMap, promise: Promise) {
+  fun createNewContact(contactMap: ReadableMap, promise: Promise){
     try {
       val contactHelper = ContactHelper(reactApplicationContext)
       val contact = contactHelper.readableMapToContact(contactMap)
@@ -437,13 +450,12 @@ class DialpadModule(reactContext: ReactApplicationContext) :
   }
 
   @ReactMethod
-  override fun updateContact(contactMap: ReadableMap, photoStatus: Double, promise: Promise) {
+  fun updateContact(contactMap: ReadableMap, photoStatus: Int, promise: Promise) {
     try {
-      // Convert photoStatus to Int, as it's expected to be an integer
-      val photoStatusInt = photoStatus.toInt()
       val contactHelper = ContactHelper(reactApplicationContext)
       val contact = contactHelper.readableMapToContact(contactMap)
-      val success = contactHelper.updateContact(contact, photoStatusInt)
+
+      val success = contactHelper.updateContact(contact,photoStatus)
 
       if (success) {
         promise.resolve("Contact updated successfully")
@@ -456,7 +468,7 @@ class DialpadModule(reactContext: ReactApplicationContext) :
   }
 
   @ReactMethod
-  override fun deleteContact(contact: ReadableMap, promise: Promise) {
+  fun deleteContact(contact: ReadableMap, promise: Promise) {
     ensureBackgroundThread {
       try {
         val contactHelper = ContactHelper(reactApplicationContext)
@@ -473,9 +485,8 @@ class DialpadModule(reactContext: ReactApplicationContext) :
       }
     }
   }
-
   @ReactMethod
-  override fun isNumberBlocked(phoneNumber: String, promise: Promise) {
+  fun isNumberBlocked(phoneNumber: String, promise: Promise) {
     try {
       val dataStore = CallSettingDataStore(reactApplicationContext)
       CoroutineScope(Dispatchers.IO).launch {
@@ -490,9 +501,8 @@ class DialpadModule(reactContext: ReactApplicationContext) :
       promise.reject("BLOCK_CHECK_ERROR", "Failed to check if number is blocked: ${e.message}")
     }
   }
-
   @ReactMethod
-  override fun getBlockedNumbers(promise: Promise) {
+  fun getBlockedNumbers(promise: Promise) {
     CoroutineScope(Dispatchers.IO).launch {
       try {
         val dataStore = CallSettingDataStore(reactApplicationContext.applicationContext)
@@ -505,7 +515,7 @@ class DialpadModule(reactContext: ReactApplicationContext) :
   }
 
   @ReactMethod
-  override fun addBlockedNumber(number: String, promise: Promise) {
+  fun addBlockedNumber(number: String, promise: Promise) {
     CoroutineScope(Dispatchers.IO).launch {
       try {
         val dataStore = CallSettingDataStore(reactApplicationContext)
@@ -518,7 +528,7 @@ class DialpadModule(reactContext: ReactApplicationContext) :
   }
 
   @ReactMethod
-  override fun removeBlockedNumber(number: String, promise: Promise) {
+  fun removeBlockedNumber(number: String, promise: Promise) {
     CoroutineScope(Dispatchers.IO).launch {
       try {
         val dataStore = CallSettingDataStore(reactApplicationContext)
@@ -531,7 +541,7 @@ class DialpadModule(reactContext: ReactApplicationContext) :
   }
 
   @ReactMethod
-  override fun toggleShowBlockNotification(promise: Promise) {
+  fun toggleShowBlockNotification(promise: Promise) {
     CoroutineScope(Dispatchers.IO).launch {
       try {
         val dataStore = CallSettingDataStore(reactApplicationContext)
@@ -543,9 +553,8 @@ class DialpadModule(reactContext: ReactApplicationContext) :
       }
     }
   }
-
   @ReactMethod
-  override fun getBlockNotificationStatus(promise: Promise) {
+  fun getBlockNotificationStatus(promise: Promise) {
     try {
       val dataStore = CallSettingDataStore(reactApplicationContext)
       CoroutineScope(Dispatchers.IO).launch {
@@ -562,12 +571,8 @@ class DialpadModule(reactContext: ReactApplicationContext) :
       promise.reject("FETCH_NOTIFICATION_STATUS_FAILED", "Failed to get block notification status: ${e.message}")
     }
   }
-
-  override fun multiply(a: Double, b: Double): Double {
-    return a * b
+  companion object{
+    const val NAME = "DialPadHelper"
   }
 
-  companion object {
-    const val NAME = "Dialpad"
-  }
 }

@@ -1,20 +1,22 @@
-import { Text, View, StyleSheet } from 'react-native';
-import { multiply } from 'react-native-dialpad';
-
-const result = multiply(3, 7);
+import React, { useEffect } from 'react';
+import { View, Text, Button } from 'react-native';
+import { ReactDialpadView, requestRole, makeCall } from 'react-native-dialpad';
+import Dimensions from 'react-native';
 
 export default function App() {
+
   return (
-    <View style={styles.container}>
-      <Text>Result: {result}</Text>
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <Button  title="Request Role" onPress={async () => {
+        console.log("button pressed")
+  try {
+    const resp = await requestRole();
+    console.log('Role response', resp);
+  } catch (err) {
+    console.log(err);
+  }
+}} />
+
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
