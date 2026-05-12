@@ -1,6 +1,6 @@
 {
   "name": "@balram_01/react-native-dialpad",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "dialer for react native",
   "main": "./lib/module/index.js",
   "types": "./lib/typescript/src/index.d.ts",
