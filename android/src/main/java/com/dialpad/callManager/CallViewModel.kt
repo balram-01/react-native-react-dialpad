@@ -59,20 +59,32 @@ class CallViewModel(private val callRepo: CallRepository,
   }
 
   fun toggleSpeaker() {
-    val newSpeakerState = !_isSpeakerOn.value
-    val isBluetoothAvailable = currentAudioState.value?.supportedBluetoothDevices?.isNotEmpty() ?:false
-    if(newSpeakerState){
-      if(isBluetoothAvailable){
-        callRepo.setAudioRoute(CallAudioState.ROUTE_BLUETOOTH)
-      }
-      else{
+    val currentRoute = currentAudioState.value?.route ?: CallAudioState.ROUTE_EARPIECE
+    val isBluetoothAvailable = currentAudioState.value?.supportedBluetoothDevices?.isNotEmpty() == true
+    
+    when (currentRoute) {
+      CallAudioState.ROUTE_EARPIECE -> {
         callRepo.setAudioRoute(CallAudioState.ROUTE_SPEAKER)
+        _isSpeakerOn.value = true
+      }
+      CallAudioState.ROUTE_SPEAKER -> {
+        if (isBluetoothAvailable) {
+          callRepo.setAudioRoute(CallAudioState.ROUTE_BLUETOOTH)
+          _isSpeakerOn.value = true
+        } else {
+          callRepo.setAudioRoute(CallAudioState.ROUTE_EARPIECE)
+          _isSpeakerOn.value = false
+        }
+      }
+      CallAudioState.ROUTE_BLUETOOTH -> {
+        callRepo.setAudioRoute(CallAudioState.ROUTE_EARPIECE)
+        _isSpeakerOn.value = false
+      }
+      else -> {
+        callRepo.setAudioRoute(CallAudioState.ROUTE_SPEAKER)
+        _isSpeakerOn.value = true
       }
     }
-    else{
-      callRepo.setAudioRoute(CallAudioState.ROUTE_EARPIECE)
-    }
-    _isSpeakerOn.value = newSpeakerState
   }
 
   fun toogleHold(){
@@ -102,6 +114,14 @@ class CallViewModel(private val callRepo: CallRepository,
   fun rejectCall() {
     callRepo.getPrimaryCall()?.disconnect()
     resetAudioMode()
+  }
+
+  fun playDtmfTone(char: Char) {
+    callRepo.getPrimaryCall()?.playDtmfTone(char)
+  }
+
+  fun stopDtmfTone() {
+    callRepo.getPrimaryCall()?.stopDtmfTone()
   }
 
   private fun setAudioModeForCall() {

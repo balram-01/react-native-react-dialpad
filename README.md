@@ -11,6 +11,13 @@ A powerful, native dialer and call management library for React Native.
 - **Contact Management**: Fetch all contacts, create new contacts, and manage blocked numbers.
 - **Call Settings**: Toggle vibrations, secure numbers, call forwarding, and quick reply management.
 
+## Screenshots
+
+| Incoming Call | Dialing | Call Actions |
+| :---: | :---: | :---: |
+| <img src="./assets/images/image1.jpeg" width="250" /> | <img src="./assets/images/image2.jpeg" width="250" /> | <img src="./assets/images/image3.jpeg" width="250" /> |
+| <img src="./assets/images/image4.jpeg" width="250" /> | <img src="./assets/images/image5.jpeg" width="250" /> | <img src="./assets/images/image6.jpeg" width="250" /> |
+
 ---
 
 ## Installation

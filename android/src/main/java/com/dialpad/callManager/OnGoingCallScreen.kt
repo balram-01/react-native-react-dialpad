@@ -1,6 +1,8 @@
 package com.dialpad.callManager
 
+import android.content.Context
 import android.content.Intent
+import android.os.PowerManager
 import android.telecom.Call
 import android.telecom.CallAudioState
 import android.util.Log
@@ -34,6 +36,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -256,6 +259,26 @@ fun OnGoingCallScreen(
 
   val dialPadCode = remember { mutableStateListOf<Char>() }
 
+  DisposableEffect(isSpeakerOn, state) {
+    var proximityWakeLock: PowerManager.WakeLock? = null
+    if (state == Call.STATE_ACTIVE && !isSpeakerOn) {
+      val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+      if (powerManager.isWakeLockLevelSupported(PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK)) {
+        proximityWakeLock = powerManager.newWakeLock(
+          PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK,
+          "com.rndialpad:ongoing_call_proximity"
+        )
+        proximityWakeLock.acquire(10 * 60 * 1000L) // 10 minutes max, just in case
+      }
+    }
+    
+    onDispose {
+      if (proximityWakeLock?.isHeld == true) {
+        proximityWakeLock?.release()
+      }
+    }
+  }
+
   LaunchedEffect(activeCall){
     if(activeCall.getStateCompat() == Call.STATE_ACTIVE && holdCall.getStateCompat() == Call.STATE_ACTIVE){
       currCallInfo = CallContact("Conference Call", "", "", "")
@@ -301,10 +324,18 @@ fun OnGoingCallScreen(
     isBluetoothAvailable = callAudioState?.supportedBluetoothDevices?.isNotEmpty() == true
   }
 
+  val currentRoute = callAudioState?.route ?: CallAudioState.ROUTE_EARPIECE
+  val isSpeakerOrBluetoothActive = currentRoute == CallAudioState.ROUTE_SPEAKER || currentRoute == CallAudioState.ROUTE_BLUETOOTH
+  val speakerIcon = if (currentRoute == CallAudioState.ROUTE_BLUETOOTH) {
+    R.drawable.baseline_bluetooth_audio_24
+  } else {
+    R.drawable.baseline_volume_up_24
+  }
+
   val icons = listOf(
     Icons(R.drawable.baseline_dialpad_24, onClick = {toggleDialpad()}, background = getBgColor(showDialpad), foreground = getFgColor(showDialpad)),
     Icons(R.drawable.baseline_mic_off_24, onClick = toggleMute, background = getBgColor(isMuted), foreground = getFgColor(isMuted)),
-    Icons(if (isBluetoothAvailable) R.drawable.baseline_bluetooth_audio_24 else R.drawable.baseline_volume_up_24, onClick = toggleSpeaker, background = getBgColor(isSpeakerOn), foreground = getFgColor(isSpeakerOn)),
+    Icons(speakerIcon, onClick = toggleSpeaker, background = getBgColor(isSpeakerOrBluetoothActive), foreground = getFgColor(isSpeakerOrBluetoothActive)),
     Icons(R.drawable.baseline_more_vert_24, onClick = { toggleShowMore() },background = getBgColor(showMore), foreground = getFgColor(showMore))
   )
 

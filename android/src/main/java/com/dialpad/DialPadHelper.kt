@@ -103,7 +103,7 @@ class DialPadHelper(reactContext: ReactApplicationContext) : ReactContextBaseJav
     val intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_DIALER)
 
     dialerResultCallbacks.put(dialerRequestCode, promise)
-    activity.startActivityForResult(intent, dialerRequestCode)
+    reactApplicationContext.startActivityForResult(intent, dialerRequestCode, null)
     dialerRequestCode++
   }
 

@@ -100,7 +100,7 @@ class DialpadModule(reactContext: ReactApplicationContext) :
     val intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_DIALER)
 
     dialerResultCallbacks.put(dialerRequestCode, promise)
-    activity.startActivityForResult(intent, dialerRequestCode)
+    reactApplicationContext.startActivityForResult(intent, dialerRequestCode, null)
     dialerRequestCode++
   }
   @RequiresPermission(anyOf = [Manifest.permission.CALL_PHONE, Manifest.permission.MANAGE_OWN_CALLS])
