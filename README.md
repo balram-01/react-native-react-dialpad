@@ -15,10 +15,8 @@ A powerful, native dialer and call management library for React Native.
 
 | Incoming Call | Dialing | Call Actions |
 | :---: | :---: | :---: |
-| <img src="./assets/images/image1.jpeg" width="250" /> | <img src="./assets/images/image2.jpeg" width="250" /> | <img src="./assets/images/image3.jpeg" width="250" /> |
-| <img src="./assets/images/image4.jpeg" width="250" /> | <img src="./assets/images/image5.jpeg" width="250" /> | <img src="./assets/images/image6.jpeg" width="250" /> |
-
----
+| <img src="https://raw.githubusercontent.com/balram-01/react-native-react-dialpad/main/assets/images/image1.jpeg" width="250" alt="Incoming Call" /> | <img src="https://raw.githubusercontent.com/balram-01/react-native-react-dialpad/main/assets/images/image2.jpeg" width="250" alt="Dialing" /> | <img src="https://raw.githubusercontent.com/balram-01/react-native-react-dialpad/main/assets/images/image3.jpeg" width="250" alt="Call Actions" /> |
+| <img src="https://raw.githubusercontent.com/balram-01/react-native-react-dialpad/main/assets/images/image4.jpeg" width="250" alt="Active Call" /> | <img src="https://raw.githubusercontent.com/balram-01/react-native-react-dialpad/main/assets/images/image5.jpeg" width="250" alt="Keypad" /> | <img src="https://raw.githubusercontent.com/balram-01/react-native-react-dialpad/main/assets/images/image6.jpeg" width="250" alt="Settings" /> |
 
 ## Installation
 
