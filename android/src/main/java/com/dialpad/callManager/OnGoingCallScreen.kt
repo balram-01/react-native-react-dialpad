@@ -171,45 +171,48 @@ fun DialpadContent(
       )
     }
 
-    FlowRow(
+    Column(
       modifier = Modifier.fillMaxWidth(),
-      horizontalArrangement = Arrangement.SpaceBetween,
-      maxItemsInEachRow = 3
+      verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-      buttons.forEach { (number, letters) ->
-        Box(
-          modifier = Modifier
-            .size(width = size *1.5f, height = size)
-            .padding(4.dp)
-            .clip(RoundedCornerShape(49))
-            .background(Color.Gray)
-            .clickable {
-              onClick(number)
-            },
-          contentAlignment = Alignment.Center // Center text inside the box
+      buttons.chunked(3).forEach { rowButtons ->
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-          Column(modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
-          ) {
-            Text(
-              text = number.toString(),
-              fontSize = 30.sp,
-              fontFamily = FontFamily.Default,
-              textAlign = TextAlign.Center,
-              fontWeight = FontWeight.Bold,
-              color = Color.White
-            )
-            if (letters.isNotEmpty()) {
-              Text(
-                text = letters,
-                fontSize = 12.sp,
-                fontFamily = FontFamily.Default,
-                textAlign = TextAlign.Center,
-                color = Color.White.copy(alpha = 0.7f)
-              )
+          rowButtons.forEach { (number, letters) ->
+            Box(
+              modifier = Modifier
+                .size(72.dp)
+                .clip(CircleShape)
+                .background(Color(0xFF3A3A3C))
+                .clickable {
+                  onClick(number)
+                },
+              contentAlignment = Alignment.Center
+            ) {
+              Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+              ) {
+                Text(
+                  text = number.toString(),
+                  fontSize = 28.sp,
+                  fontFamily = FontFamily.Default,
+                  fontWeight = FontWeight.Medium,
+                  color = Color.White
+                )
+                if (letters.isNotEmpty()) {
+                  Text(
+                    text = letters,
+                    fontSize = 10.sp,
+                    fontFamily = FontFamily.Default,
+                    color = Color.White.copy(alpha = 0.6f)
+                  )
+                }
+              }
             }
           }
-
         }
       }
     }
@@ -291,39 +294,34 @@ fun OnGoingCallScreen(
     showDialpad = !showDialpad
   }
 
-  fun getColor(value:Boolean):Color
-  {
-    if(value){
-      return Color.Black
-    }
-    return Color.White
+  fun getBgColor(isActive: Boolean): Color = if (isActive) Color.White else Color(0xFF2C2C2E)
+  fun getFgColor(isActive: Boolean): Color = if (isActive) Color.Black else Color.White
 
-  }
   LaunchedEffect(callAudioState){
     isBluetoothAvailable = callAudioState?.supportedBluetoothDevices?.isNotEmpty() == true
   }
 
   val icons = listOf(
-    Icons(R.drawable.baseline_dialpad_24, onClick = {toggleDialpad()}, background = getColor(showDialpad), foreground = getColor(!showDialpad)),
-    Icons(R.drawable.baseline_mic_off_24, onClick = toggleMute, background = getColor(isMuted), foreground = getColor(!isMuted)),
-    Icons(if (isBluetoothAvailable) R.drawable.baseline_bluetooth_audio_24 else R.drawable.baseline_volume_up_24, onClick = toggleSpeaker, background = getColor(isSpeakerOn), foreground = getColor(!isSpeakerOn)),
-    Icons(R.drawable.baseline_more_vert_24, onClick = { toggleShowMore() },background = getColor(showMore), foreground = getColor(!showMore))
+    Icons(R.drawable.baseline_dialpad_24, onClick = {toggleDialpad()}, background = getBgColor(showDialpad), foreground = getFgColor(showDialpad)),
+    Icons(R.drawable.baseline_mic_off_24, onClick = toggleMute, background = getBgColor(isMuted), foreground = getFgColor(isMuted)),
+    Icons(if (isBluetoothAvailable) R.drawable.baseline_bluetooth_audio_24 else R.drawable.baseline_volume_up_24, onClick = toggleSpeaker, background = getBgColor(isSpeakerOn), foreground = getFgColor(isSpeakerOn)),
+    Icons(R.drawable.baseline_more_vert_24, onClick = { toggleShowMore() },background = getBgColor(showMore), foreground = getFgColor(showMore))
   )
 
   val moreIcons = listOf(
-    Icons(R.drawable.baseline_pause_24, onClick = { toggleHold() }, background = getColor(isHold), foreground = getColor(!isHold),
+    Icons(R.drawable.baseline_pause_24, onClick = { toggleHold() }, background = getBgColor(isHold), foreground = getFgColor(isHold),
       isEnabled = activeCall.getStateCompat() == Call.STATE_ACTIVE || activeCall.getStateCompat() == Call.STATE_HOLDING),
-    Icons(R.drawable.baseline_add_call_24, onClick = { onAddCall() }, background = Color.White, foreground = Color.Black)
+    Icons(R.drawable.baseline_add_call_24, onClick = { onAddCall() }, background = Color(0xFF2C2C2E), foreground = Color.White)
   )
 
   val moreIconsWithHold = listOf(
-    Icons(R.drawable.baseline_swap_calls_24, onClick = { toggleSwap()}, background = Color.White, foreground = Color.Black,
+    Icons(R.drawable.baseline_swap_calls_24, onClick = { toggleSwap()}, background = Color(0xFF2C2C2E), foreground = Color.White,
       isEnabled = holdCall!== null && (holdCall.getStateCompat() == Call.STATE_ACTIVE || holdCall.getStateCompat() == Call.STATE_HOLDING) || !isConference
     ) ,
-    Icons(R.drawable.baseline_add_call_24, onClick = {}, background = Color.White, foreground = Color.Black,
+    Icons(R.drawable.baseline_add_call_24, onClick = {}, background = Color(0xFF2C2C2E), foreground = Color.White,
       isEnabled = holdCall == null
     ),
-    Icons(R.drawable.baseline_call_merge_24, onClick ={ toggleMerge() }, background = Color.White, foreground = Color.Black,
+    Icons(R.drawable.baseline_call_merge_24, onClick ={ toggleMerge() }, background = Color(0xFF2C2C2E), foreground = Color.White,
       isEnabled = holdCall!= null && (holdCall.getStateCompat() == Call.STATE_ACTIVE || holdCall.getStateCompat() == Call.STATE_HOLDING) || !isConference
     )
   )
@@ -344,20 +342,21 @@ fun OnGoingCallScreen(
   }
 
   Column(modifier = modifier.fillMaxSize()
-    .background(Color.White),
+    .background(Color(0xFF121212)),
     verticalArrangement = Arrangement.SpaceBetween) {
 
     Box(modifier= modifier.fillMaxWidth()){
 
       Column(modifier = modifier
         .fillMaxWidth()
-        .padding(0.dp, 8.dp),
+        .padding(0.dp, 40.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
       ) {
         Box(modifier = modifier
+          .size(120.dp)
           .clip(CircleShape)
-          .background(Color.Gray.copy(alpha = 0.2f))){
+          .background(Color(0xFF2C2C2E))){
           val imageUri = currCallInfo?.photoUri.takeIf { !it.isNullOrEmpty() }
             ?: R.drawable.baseline_person_24
 
@@ -367,24 +366,27 @@ fun OnGoingCallScreen(
               .transformations(CircleCropTransformation())
               .build(),
             contentDescription = "Caller Avatar",
-            modifier = Modifier.size(80.dp),
+            modifier = Modifier.fillMaxSize(),
             placeholder = painterResource(R.drawable.baseline_person_24),
-            error = painterResource(R.drawable.baseline_person_24)
+            error = painterResource(R.drawable.baseline_person_24),
+            contentScale = ContentScale.Crop
           )
         }
         if(state == Call.STATE_DIALING || state  == Call.STATE_CONNECTING){
           Text(text=state.asString(),
-            fontSize = 14.sp,
+            fontSize = 16.sp,
             fontFamily = FontFamily.Default,
-            fontWeight = FontWeight.Medium
+            fontWeight = FontWeight.Medium,
+            color = Color.LightGray
           )
         }
 
         Text(
           text = currCallInfo?.name.takeIf { !it.isNullOrBlank() } ?: activeCall.details?.handle?.schemeSpecificPart.orEmpty(),
-          fontSize = 30.sp,
+          fontSize = 32.sp,
           fontFamily = FontFamily.Default,
-          fontWeight = FontWeight.Bold
+          fontWeight = FontWeight.Bold,
+          color = Color.White
         )
 
         if(state == Call.STATE_ACTIVE){
@@ -392,8 +394,8 @@ fun OnGoingCallScreen(
             text = formattedTime,
             fontSize = 20.sp,
             fontFamily = FontFamily.Default,
-            fontWeight = FontWeight.SemiBold,
-            color = Color.Gray
+            fontWeight = FontWeight.Medium,
+            color = Color.LightGray
           )
         }
       }
@@ -430,9 +432,9 @@ fun OnGoingCallScreen(
 
     Column(modifier = modifier
       .fillMaxWidth()
-      .clip(RoundedCornerShape(12.dp, 12.dp, 0.dp, 0.dp))
-      .background(Color.LightGray.copy(alpha = 0.4f))
-      .padding(10.dp, 40.dp),
+      .clip(RoundedCornerShape(32.dp, 32.dp, 0.dp, 0.dp))
+      .background(Color(0xFF1C1C1E))
+      .padding(20.dp, 40.dp, 20.dp, 50.dp),
       verticalArrangement = Arrangement.spacedBy(40.dp)
     ){
 
@@ -460,12 +462,13 @@ fun OnGoingCallScreen(
             Box(modifier = modifier
               .clip(CircleShape)
               .background(item.background)
-              .padding(10.dp)
-              .clickable(enabled = item.isEnabled) { item.onClick() }
+              .size(64.dp)
+              .clickable(enabled = item.isEnabled) { item.onClick() },
+              contentAlignment = Alignment.Center
             ){
               Image(painter = painterResource(item.name),
                 contentDescription = null,
-                modifier = Modifier.size(30.dp),
+                modifier = Modifier.size(28.dp),
                 contentScale = ContentScale.Crop,
                 colorFilter = ColorFilter.tint(
                   if (item.isEnabled) item.foreground else item.foreground.copy(alpha = 0.3f)
@@ -483,12 +486,13 @@ fun OnGoingCallScreen(
           Box(modifier = modifier
             .clip(CircleShape)
             .background(item.background)
-            .padding(10.dp)
-            .clickable{ item.onClick() }
+            .size(64.dp)
+            .clickable{ item.onClick() },
+            contentAlignment = Alignment.Center
           ){
             Image(painter = painterResource(item.name),
               contentDescription = null,
-              modifier = Modifier.size(30.dp),
+              modifier = Modifier.size(28.dp),
               contentScale = ContentScale.Crop,
               colorFilter = ColorFilter.tint(item.foreground)
             )
@@ -502,13 +506,14 @@ fun OnGoingCallScreen(
       ){
         Box(modifier = modifier
           .clip(CircleShape)
-          .background(Color.Red)
-          .padding(10.dp)
-          .clickable { onReject() }
+          .background(Color(0xFFFF3B30))
+          .size(76.dp)
+          .clickable { onReject() },
+          contentAlignment = Alignment.Center
         ){
           Image(painter = painterResource(R.drawable.baseline_call_end_24),
             contentDescription = null,
-            modifier = Modifier.size(40.dp),
+            modifier = Modifier.size(36.dp),
             colorFilter =  ColorFilter.tint(Color.White),
             contentScale = ContentScale.Crop)
         }

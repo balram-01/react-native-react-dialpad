@@ -89,6 +89,7 @@ class CallViewModel(private val callRepo: CallRepository,
 
   fun toggleMute() {
     val newMuteState = !_isMuted.value
+    callRepo.setMute(newMuteState)
     audioManager.isMicrophoneMute = newMuteState
     _isMuted.value = newMuteState
   }
@@ -105,10 +106,17 @@ class CallViewModel(private val callRepo: CallRepository,
 
   private fun setAudioModeForCall() {
     audioManager.mode = AudioManager.MODE_IN_CALL
+    audioManager.isMicrophoneMute = false
+    try {
+      callRepo.setMute(false)
+    } catch (e: Exception) {
+      Log.e(TAG, "Error unmuting: ${e.message}")
+    }
   }
 
   private fun resetAudioMode() {
     audioManager.mode = AudioManager.MODE_NORMAL
+    audioManager.isMicrophoneMute = false
   }
 
   override fun onCleared() {

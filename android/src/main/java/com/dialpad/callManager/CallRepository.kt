@@ -207,6 +207,10 @@ object CallRepository {
     inCallService?.setAudioRoute(newRoute)
   }
 
+  fun setMute(state: Boolean) {
+    inCallService?.setMuted(state)
+  }
+
   fun getConferenceCalls(): List<Call> {
     return calls.find { it.isConference() }?.children ?: emptyList()
   }

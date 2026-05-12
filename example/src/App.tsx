@@ -10,7 +10,11 @@ import {
   StatusBar,
   ScrollView,
 } from 'react-native';
-import { requestRole, makeCall, getAllContacts } from 'react-native-dialpad';
+import {
+  requestRole,
+  makeCall,
+  getAllContacts,
+} from '@balram_01/react-native-dialpad';
 import { SafeAreaView } from 'react-native-safe-area-context';
 const DIALPAD_BUTTONS = [
   { number: '1', letters: '' },

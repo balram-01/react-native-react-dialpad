@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
@@ -219,41 +220,28 @@ fun IncomingCallScreen(
     onReject()
   }
 
-  Box(modifier = modifier.fillMaxSize()){
+  Box(modifier = modifier.fillMaxSize().background(Color(0xFF121212))) {
     Column(modifier = modifier.fillMaxSize(),
-      verticalArrangement = Arrangement.Center
-    ){
-      Image(painter = painterResource(R.drawable.image_20241014_125935),
-        contentDescription = null,
-        modifier = Modifier.width(width.dp)
-          .height((height /3.5f).dp),
-        contentScale = ContentScale.Fit
-      )
-    }
-    Column(modifier = modifier.fillMaxSize()
-      .background(Color(0xFF576DEB).copy(alpha = 0.8f)),
-      verticalArrangement = Arrangement.SpaceEvenly
+      verticalArrangement = Arrangement.SpaceBetween,
+      horizontalAlignment = Alignment.CenterHorizontally
     ) {
+      Spacer(modifier = Modifier.height(80.dp))
+      
+      // Top Info
       Column(modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-      )
-      {
-        Text(text=currCallInfo?.name.takeIf { !it.isNullOrBlank() } ?:  callerNumber,
-          fontSize = 28.sp,
-          fontFamily = FontFamily.Default,
-          fontWeight = FontWeight.Bold,
-          color =Color.White
-        )
-        Text(text = state.asString()+"...",
-          fontSize = 14.sp,
+        verticalArrangement = Arrangement.spacedBy(20.dp)
+      ) {
+        Text(text = state.asString() + "...",
+          fontSize = 18.sp,
           fontFamily = FontFamily.Default,
           fontWeight = FontWeight.Medium,
-          color = Color.White
+          color = Color.LightGray
         )
         Box(modifier = modifier
+          .size(130.dp)
           .clip(CircleShape)
-          .background(Color.Gray.copy(alpha = 0.2f))
+          .background(Color(0xFF2C2C2E))
         ){
           val imageUri = currCallInfo?.photoUri.takeIf { !it.isNullOrEmpty() }
             ?: R.drawable.baseline_person_24 // Fallback to the drawable resource
@@ -264,60 +252,58 @@ fun IncomingCallScreen(
               .transformations(CircleCropTransformation())
               .build(),
             contentDescription = "Caller Avatar",
-            modifier = Modifier.size(80.dp),
+            modifier = Modifier.fillMaxSize(),
             placeholder = painterResource(R.drawable.baseline_person_24),
-            error = painterResource(R.drawable.baseline_person_24)
+            error = painterResource(R.drawable.baseline_person_24),
+            contentScale = ContentScale.Crop
           )
         }
+        Text(text=currCallInfo?.name.takeIf { !it.isNullOrBlank() } ?: callerNumber,
+          fontSize = 34.sp,
+          fontFamily = FontFamily.Default,
+          fontWeight = FontWeight.Bold,
+          color = Color.White
+        )
       }
 
+      // Bottom Actions
       Row(modifier = modifier.fillMaxWidth()
-        .padding(40.dp,0.dp),
-        horizontalArrangement = Arrangement.SpaceBetween){
+        .padding(horizontal = 40.dp, vertical = 60.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.Bottom
+      ){
 
-        Box(modifier = modifier
-          .clip(CircleShape)
-          .background(Color.White)
-          .padding(10.dp)
-          .clickable {
-            onReject()
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+          Box(modifier = modifier
+            .clip(CircleShape)
+            .background(Color(0xFFFF3B30))
+            .size(76.dp)
+            .clickable { onReject() },
+            contentAlignment = Alignment.Center
+          ){
+            Image(painter = painterResource(R.drawable.baseline_call_end_24),
+              contentDescription = "Decline",
+              modifier = Modifier.size(36.dp),
+              colorFilter =  ColorFilter.tint(Color.White),
+              contentScale = ContentScale.Crop)
           }
-        ){
-          Image(painter = painterResource(R.drawable.baseline_call_end_24),
-            contentDescription = null,
-            modifier = Modifier.size(30.dp),
-            colorFilter =  ColorFilter.tint(Color.Red),
-            contentScale = ContentScale.Crop)
+          Spacer(modifier = Modifier.height(12.dp))
+          Text("Decline", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Medium)
         }
 
         Box(modifier = modifier
           .clip(CircleShape)
-          .background(Color.White)
-          .padding(10.dp)
-          .clickable{
-            onAnswer()
-          }
-        ){
-          Image(painter = painterResource(R.drawable.baseline_call_24),
-            contentDescription = null,
-            modifier = Modifier.size(30.dp),
-            colorFilter =  ColorFilter.tint(Color.Green),
-            contentScale = ContentScale.Crop)
-        }
-
-        Box(modifier = modifier
-          .clip(CircleShape)
-          .background(Color.White)
-          .padding(15.dp)
+          .background(Color(0xFF3A3A3C))
+          .padding(14.dp)
         ){
           var expanded by remember { mutableStateOf(false) }
 
           Image(
             painter = painterResource(R.drawable.baseline_chat_bubble_24),
-            contentDescription = null,
-            modifier = Modifier.size(20.dp)
+            contentDescription = "Message",
+            modifier = Modifier.size(24.dp)
               .clickable { expanded = !expanded },
-            colorFilter =  ColorFilter.tint(Color.Black),
+            colorFilter =  ColorFilter.tint(Color.White),
             contentScale = ContentScale.Crop
           )
 
@@ -329,7 +315,24 @@ fun IncomingCallScreen(
             expanded=expanded,
             onDismiss = {expanded = !expanded}
           )
+        }
 
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+          Box(modifier = modifier
+            .clip(CircleShape)
+            .background(Color(0xFF34C759))
+            .size(76.dp)
+            .clickable{ onAnswer() },
+            contentAlignment = Alignment.Center
+          ){
+            Image(painter = painterResource(R.drawable.baseline_call_24),
+              contentDescription = "Answer",
+              modifier = Modifier.size(36.dp),
+              colorFilter =  ColorFilter.tint(Color.White),
+              contentScale = ContentScale.Crop)
+          }
+          Spacer(modifier = Modifier.height(12.dp))
+          Text("Answer", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Medium)
         }
 
       }

@@ -1,5 +1,5 @@
 {
-  "name": "react-native-dialpad",
+  "name": "@balram_01/react-native-dialpad",
   "version": "0.1.0",
   "description": "dialer for react native",
   "main": "./lib/module/index.js",
@@ -56,6 +56,7 @@
   },
   "homepage": "https://github.com/balram-01/react-native-dialpad#readme",
   "publishConfig": {
+    "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
   "devDependencies": {
