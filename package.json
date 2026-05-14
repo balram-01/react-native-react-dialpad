@@ -1,6 +1,6 @@
 {
   "name": "@balram_01/react-native-dialpad",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "dialer for react native",
   "main": "./lib/module/index.js",
   "types": "./lib/typescript/src/index.d.ts",
@@ -45,7 +45,7 @@
     "ios",
     "android"
   ],
- "repository": {
+  "repository": {
     "type": "git",
     "url": "git+https://github.com/balram-01/react-native-react-dialpad.git"
   },
