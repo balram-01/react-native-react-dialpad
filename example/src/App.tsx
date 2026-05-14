@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,9 @@ import {
   requestRole,
   makeCall,
   getAllContacts,
+  getCallLogs,
+  checkIfDefaultDialer,
+  openDialerSetting,
 } from '@balram_01/react-native-dialpad';
 import { SafeAreaView } from 'react-native-safe-area-context';
 const DIALPAD_BUTTONS = [
@@ -33,6 +36,21 @@ const DIALPAD_BUTTONS = [
 
 export default function App() {
   const [phoneNumber, setPhoneNumber] = useState('');
+
+  useEffect(() => {
+    const initDialerRole = async () => {
+      try {
+        const isDefault = await checkIfDefaultDialer();
+        if (!isDefault) {
+          await requestRole();
+        }
+      } catch (err) {
+        console.warn('Failed to request default dialer on mount:', err);
+      }
+    };
+    
+    initDialerRole();
+  }, []);
 
   const requestCallPermission = async () => {
     if (Platform.OS === 'android') {
@@ -137,6 +155,57 @@ export default function App() {
     }
   };
 
+  const requestCallLogPermission = async () => {
+    if (Platform.OS === 'android') {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.READ_CALL_LOG
+        );
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      } catch (err) {
+        console.warn(err);
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const handleGetLogs = async () => {
+    const hasPermission = await requestCallLogPermission();
+    if (!hasPermission) {
+      Alert.alert('Permission Denied', 'Call Log permission is required.');
+      return;
+    }
+    try {
+      const logs = await getCallLogs();
+      const recent = logs.length > 0 ? `\nRecent: ${logs[0].number}` : '';
+      Alert.alert(
+        'Call Logs',
+        `Successfully fetched ${logs.length} logs.${recent}`
+      );
+    } catch (err) {
+      console.log('Logs error:', err);
+      Alert.alert('Error', 'Failed to fetch call logs.');
+    }
+  };
+
+  const handleCheckDefault = async () => {
+    try {
+      const isDefault = await checkIfDefaultDialer();
+      Alert.alert('Status', isDefault ? 'Yes, this is the default dialer.' : 'No, this is NOT the default dialer.');
+    } catch (err) {
+      Alert.alert('Error', 'Could not check default dialer status.');
+    }
+  };
+
+  const handleOpenSettings = async () => {
+    try {
+      await openDialerSetting();
+    } catch (err) {
+      Alert.alert('Error', 'Failed to open settings.');
+    }
+  };
+
   const formatPhoneNumber = (number: string) => {
     // Simple formatting for display purposes (optional but nice for premium feel)
     if (number.length > 10) return number;
@@ -155,18 +224,42 @@ export default function App() {
 
       {/* Top Navigation / Actions */}
       <View style={styles.topBar}>
-        <Pressable
-          onPress={handleGetContacts}
-          style={({ pressed }) => [styles.textBtn, pressed && styles.pressed]}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.topBarScroll}
         >
-          <Text style={styles.textBtnText}>Contacts</Text>
-        </Pressable>
-        <Pressable
-          onPress={handleRequestRole}
-          style={({ pressed }) => [styles.textBtn, pressed && styles.pressed]}
-        >
-          <Text style={styles.textBtnText}>Set Default</Text>
-        </Pressable>
+          <Pressable
+            onPress={handleGetContacts}
+            style={({ pressed }) => [styles.textBtn, pressed && styles.pressed]}
+          >
+            <Text style={styles.textBtnText}>Contacts</Text>
+          </Pressable>
+          <Pressable
+            onPress={handleGetLogs}
+            style={({ pressed }) => [styles.textBtn, pressed && styles.pressed]}
+          >
+            <Text style={styles.textBtnText}>Logs</Text>
+          </Pressable>
+          <Pressable
+            onPress={handleRequestRole}
+            style={({ pressed }) => [styles.textBtn, pressed && styles.pressed]}
+          >
+            <Text style={styles.textBtnText}>Set Default</Text>
+          </Pressable>
+          <Pressable
+            onPress={handleCheckDefault}
+            style={({ pressed }) => [styles.textBtn, pressed && styles.pressed]}
+          >
+            <Text style={styles.textBtnText}>Check Default</Text>
+          </Pressable>
+          <Pressable
+            onPress={handleOpenSettings}
+            style={({ pressed }) => [styles.textBtn, pressed && styles.pressed]}
+          >
+            <Text style={styles.textBtnText}>Settings</Text>
+          </Pressable>
+        </ScrollView>
       </View>
 
       {/* Number Display Area */}
@@ -248,16 +341,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#121212',
   },
   topBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
     paddingTop: 16,
+  },
+  topBarScroll: {
+    paddingRight: 16,
   },
   textBtn: {
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    marginRight: 8,
   },
   textBtnText: {
     color: '#0A84FF',

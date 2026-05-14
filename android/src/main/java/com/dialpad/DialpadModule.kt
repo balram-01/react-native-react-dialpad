@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.provider.CallLog
 import android.telecom.TelecomManager
 import android.util.Log
 import android.util.SparseArray
@@ -560,6 +561,107 @@ class DialpadModule(reactContext: ReactApplicationContext) :
       }
     } catch (e: Exception) {
       promise.reject("FETCH_NOTIFICATION_STATUS_FAILED", "Failed to get block notification status: ${e.message}")
+    }
+  }
+
+  @RequiresPermission(Manifest.permission.READ_CALL_LOG)
+  @ReactMethod
+  override fun getCallLogs(promise: Promise) {
+    ensureBackgroundThread {
+      try {
+        val result = Arguments.createArray()
+        val cursor = reactApplicationContext.contentResolver.query(
+          CallLog.Calls.CONTENT_URI,
+          arrayOf(
+            CallLog.Calls.NUMBER,
+            CallLog.Calls.TYPE,
+            CallLog.Calls.DATE,
+            CallLog.Calls.DURATION,
+            CallLog.Calls.CACHED_NAME
+          ),
+          null,
+          null,
+          "${CallLog.Calls.DATE} DESC LIMIT 500" // limit to last 500 to prevent OOM
+        )
+
+        cursor?.use {
+          if (it.moveToFirst()) {
+            val numberIndex = it.getColumnIndex(CallLog.Calls.NUMBER)
+            val typeIndex = it.getColumnIndex(CallLog.Calls.TYPE)
+            val dateIndex = it.getColumnIndex(CallLog.Calls.DATE)
+            val durationIndex = it.getColumnIndex(CallLog.Calls.DURATION)
+            val nameIndex = it.getColumnIndex(CallLog.Calls.CACHED_NAME)
+
+            if (numberIndex != -1 && typeIndex != -1 && dateIndex != -1) {
+              do {
+                val number = it.getString(numberIndex) ?: ""
+                val callType = it.getInt(typeIndex)
+                val callDate = it.getLong(dateIndex)
+                val duration = it.getLong(durationIndex)
+                val name = if (nameIndex != -1) it.getString(nameIndex) ?: "" else ""
+
+                val map = Arguments.createMap()
+                map.putString("number", number)
+                map.putInt("type", callType)
+                map.putDouble("date", callDate.toDouble())
+                map.putDouble("duration", duration.toDouble())
+                map.putString("name", name)
+                
+                result.pushMap(map)
+              } while (it.moveToNext())
+            }
+          }
+        }
+        promise.resolve(result)
+      } catch (e: Exception) {
+        promise.reject("GET_CALLLOGS_ERROR", e.localizedMessage, e)
+      }
+    }
+  }
+
+  @ReactMethod
+  override fun getDefaultDialerPackage(promise: Promise) {
+    try {
+      val telecomManager = reactApplicationContext.getSystemService(TelecomManager::class.java)
+      if (telecomManager != null) {
+        promise.resolve(telecomManager.defaultDialerPackage ?: "")
+      } else {
+        promise.reject("TELECOM_MANAGER_ERROR", "TelecomManager not available")
+      }
+    } catch (e: Exception) {
+      promise.reject("GET_DEFAULT_DIALER_ERROR", e.localizedMessage, e)
+    }
+  }
+
+  @ReactMethod
+  override fun checkIfDefaultDialer(promise: Promise) {
+    try {
+      val telecomManager = reactApplicationContext.getSystemService(TelecomManager::class.java)
+      if (telecomManager != null) {
+        val defaultDialer = telecomManager.defaultDialerPackage
+        val packageName = reactApplicationContext.packageName
+        promise.resolve(defaultDialer == packageName)
+      } else {
+        promise.reject("TELECOM_MANAGER_ERROR", "TelecomManager not available")
+      }
+    } catch (e: Exception) {
+      promise.reject("CHECK_DEFAULT_DIALER_ERROR", e.localizedMessage, e)
+    }
+  }
+
+  @ReactMethod
+  override fun openDialerSetting(promise: Promise) {
+    try {
+      val intent = Intent(android.provider.Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
+      intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+      if (intent.resolveActivity(reactApplicationContext.packageManager) != null) {
+        reactApplicationContext.startActivity(intent)
+        promise.resolve("Opened Settings")
+      } else {
+        promise.reject("INTENT_ERROR", "Action not supported on this device")
+      }
+    } catch (e: Exception) {
+      promise.reject("OPEN_SETTING_ERROR", e.localizedMessage, e)
     }
   }
 

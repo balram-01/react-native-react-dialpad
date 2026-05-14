@@ -105,6 +105,18 @@ export interface Spec extends TurboModule {
   removeBlockedNumber(number: string): Promise<string>;
   toggleShowBlockNotification(): Promise<string>;
   getBlockNotificationStatus(): Promise<boolean>;
+  getCallLogs(): Promise<
+    Array<{
+      number: string;
+      type: number;
+      date: number;
+      duration: number;
+      name: string;
+    }>
+  >;
+  getDefaultDialerPackage(): Promise<string>;
+  checkIfDefaultDialer(): Promise<boolean>;
+  openDialerSetting(): Promise<string>;
 }
 
 export default TurboModuleRegistry.getEnforcing<Spec>('Dialpad');

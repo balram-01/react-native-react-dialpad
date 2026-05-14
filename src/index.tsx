@@ -184,3 +184,27 @@ export async function toggleShowBlockNotification(): Promise<string> {
 export async function getBlockNotificationStatus(): Promise<boolean> {
   return await Dialpad.getBlockNotificationStatus();
 }
+
+export async function getCallLogs(): Promise<
+  Array<{
+    number: string;
+    type: number;
+    date: number;
+    duration: number;
+    name: string;
+  }>
+> {
+  return await Dialpad.getCallLogs();
+}
+
+export async function getDefaultDialerPackage(): Promise<string> {
+  return await Dialpad.getDefaultDialerPackage();
+}
+
+export async function checkIfDefaultDialer(): Promise<boolean> {
+  return await Dialpad.checkIfDefaultDialer();
+}
+
+export async function openDialerSetting(): Promise<string> {
+  return await Dialpad.openDialerSetting();
+}
