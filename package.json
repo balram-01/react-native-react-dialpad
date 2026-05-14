@@ -45,16 +45,16 @@
     "ios",
     "android"
   ],
-  "repository": {
+ "repository": {
     "type": "git",
-    "url": "git+https://github.com/balram-01/react-native-dialpad.git"
+    "url": "git+https://github.com/balram-01/react-native-react-dialpad.git"
   },
   "author": "Balram <baliramshejal2001@gmail.com> (https://github.com/balram-01)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/balram-01/react-native-dialpad/issues"
+    "url": "https://github.com/balram-01/react-native-react-dialpad/issues"
   },
-  "homepage": "https://github.com/balram-01/react-native-dialpad#readme",
+  "homepage": "https://github.com/balram-01/react-native-react-dialpad#readme",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
