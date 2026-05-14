@@ -6,7 +6,8 @@
 
 <br />
 
-[![npm version](https://img.shields.io/npm/v/@balram_01/react-native-dialpad?color=6C63FF&style=for-the-badge&logo=npm&logoColor=white)](https://www.npmjs.com/package/@balram_01/react-native-dialpad)
+[![npm version](https://img.shields.io/npm/v/react-native-dialpad?color=6C63FF&style=for-the-badge&logo=npm&logoColor=white)](https://www.npmjs.com/package/react-native-dialpad)
+[![npm downloads](https://img.shields.io/npm/dm/react-native-dialpad?color=10B981&style=for-the-badge&logo=npm&logoColor=white)](https://www.npmjs.com/package/react-native-dialpad)
 [![TypeScript](https://img.shields.io/badge/TypeScript-100%25-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-F59E0B?style=for-the-badge)](https://opensource.org/licenses/MIT)
 [![Platform](https://img.shields.io/badge/Platform-Android-lightgrey?style=for-the-badge)](#)
